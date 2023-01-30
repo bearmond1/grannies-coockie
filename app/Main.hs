@@ -27,4 +27,4 @@ connString = "host=localhost port=5432 user=postgres dbname=postgres password=my
 
 
 main :: IO ()
-main = run 3000 $ app connString
+main = print "Hello" >> ( run 3000 $ app connString)

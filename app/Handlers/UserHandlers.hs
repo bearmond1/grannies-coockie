@@ -1,23 +1,25 @@
-module Handlers where
+module Handlers.UserHandlers where
+
 
 
 import Control.Monad.IO.Class       (liftIO,MonadIO)
 import System.Random
 import Data.Time.Calendar
 import GHC.Generics ( Generic )
-import Data.Maybe (fromMaybe)
 
 import Database.Persist.Postgresql 
 import Servant
-import Servant.Pagination
 
 import Data.Text hiding ( map, length )
 import Data.Text.Encoding
-import qualified Data.ByteString as BS
 import Data.Aeson
 
 import DBTypes
-import Authorization
+import Handlers.NewsHandlers
+import Handlers.Authorization
+import Handlers.Primitives
+
+
 
 
 
@@ -46,20 +48,28 @@ proxyToUser (UserProxyType{..}) = User login (encodeUtf8 pass) "" email phone_nu
   
 
   
-getUsersHandler :: ConnectionString -> Maybe Int -> Maybe Int -> Maybe Text -> Handler [UserProxyType]
-getUsersHandler connStr mbLimit mboffset mbLogin = do
-  liftIO $ print (mbLimit,mboffset)
-  users <- runDB connStr getUsers mbLogin
+getUsersHandler :: ConnectionString -> Maybe Int -> Maybe Text -> Handler [UserProxyType]
+getUsersHandler connStr mbLimit mbOffsetKey = do
+  let queryParams = getFetchUsersParams mbLimit mbOffsetKey
+  users <- runDB connStr $ getUsers queryParams
   return $ fmap userToProxy users 
 
 
 
-getUsers :: (MonadIO m) => Maybe Text -> SqlPersistT m [User]
-getUsers mbLogin = do
-  let filters = case mbLogin of 
-                  Nothing -> []
-                  (Just login) -> [UserLogin ==. login]
-  list <- selectList filters []
+getFetchUsersParams :: Maybe Int -> Maybe Text -> SelectParams User
+getFetchUsersParams mbLimit mbOffsetKey =
+  let filters = case mbOffsetKey of 
+                 Just k -> [UserLogin >. k]
+                 Nothing -> []
+      options = case mbLimit of
+                 Just l -> [LimitTo l,Asc UserLogin]
+                 Nothing -> [Asc UserLogin]
+  in SelectParams {..}
+
+
+getUsers :: (MonadIO m) => SelectParams User -> SqlPersistT m [User]
+getUsers SelectParams{..} = do
+  list <- selectList filters options
   return $ map (\(Entity _ u) -> u) list
 
 
@@ -67,7 +77,7 @@ getUsers mbLogin = do
 
 getSingleUserHandler :: ConnectionString -> Text -> Handler UserProxyType
 getSingleUserHandler connStr login = do
-  users <- runDB connStr getSingleUser login
+  users <- runDB connStr $ getSingleUser login
   case users of 
     [Entity _ user] -> return $ userToProxy user
     _ -> credentialsError
@@ -80,7 +90,7 @@ getSingleUser login = selectList [UserLogin ==. login] []
 
 
 createUserHandler :: ConnectionString -> UserProxyType -> Handler Bool
-createUserHandler connStr user = runDB connStr writeNewUserDB (proxyToUser user) >> return True
+createUserHandler connStr user = runDB connStr $ writeNewUserDB (proxyToUser user) >> return True
 
 
 writeNewUserDB :: (MonadIO m) => User -> SqlPersistT m User
@@ -88,22 +98,3 @@ writeNewUserDB user = do
   (pass_hash,salt) <- liftIO $ getPasswordHash user.userPassword
   insert user{ userPassword = pass_hash, userSalt = salt }
   return user
-  
-  
-  
-createNewsHandler :: ConnectionString -> Maybe Text -> News -> Handler Bool
-createNewsHandler connStr credentials news = do
-  checkCredentials connStr authorAuthority credentials
-  id <- liftIO randomIO 
-  let news' = news{ newsNews_id = id }
-  runDB connStr insert news'
-  return True
-
-
-
-
-createCategoryHandler :: ConnectionString -> Maybe Text -> Category -> Handler Bool
-createCategoryHandler connStr credentials category = do
-  checkCredentials connStr adminAuthority credentials
-  runDB connStr insert category
-  return True

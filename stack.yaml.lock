@@ -5,12 +5,19 @@
 
 packages:
 - completed:
-    hackage: servant-pagination-2.5.0@sha256:f22554b5c2844909c6cc8c50deee2c0e44b1a9977d647a755518569f28678d80,4756
+    hackage: servant-util-0.4@sha256:b7e8e35c8e3258fc1f4e3880b428884925b3e303259bd324cac50b4c0824caaf,7501
     pantry-tree:
-      sha256: 70fb734ba69aafdf3f271c03eb5b274ca9899badf2cc3b5da9632ed92729ad67
-      size: 741
+      sha256: 81f06a1d587e20320f1375c1e83e3c491d969ef5019f0cb262bddfb4449eaae1
+      size: 4333
   original:
-    hackage: servant-pagination-2.5.0
+    hackage: servant-util-0.4
+- completed:
+    hackage: text-format-0.3.2.1@sha256:b1aa76c7915876ffb194b2b45325c6d53ff72f9f1965b112bc70f3e7f4e7b197,1850
+    pantry-tree:
+      sha256: 3672ddb9c00628a0a6741f7f03cb8aa1763a3bfd65879c55efc1cbd405cb7b98
+      size: 1030
+  original:
+    hackage: text-format-0.3.2.1
 snapshots:
 - completed:
     sha256: 4905c93319aa94aa53da8f41d614d7bacdbfe6c63a8c6132d32e6e62f24a9af4

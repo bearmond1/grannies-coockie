@@ -20,45 +20,52 @@ import           Database.Persist.Postgresql
 import           Database.Persist.TH
 import           Data.Time.Calendar
 import           Data.Text
+import           Data.Int
 import           Data.ByteString
 import           GHC.Generics (Generic)
-import           Servant.Pagination
 import           Data.Proxy (Proxy (..))
 
 
-
+-- to remove prefix and implicit ID column
 share [mkPersist sqlSettings] [persistLowerCase|
 User 
     login Text
     Primary login
     password ByteString
-	salt ByteString
+    salt ByteString
     email Text
     phone_number Text
     join_date Day 
     admin Bool
     author Bool
     deriving Show
-	
+    
 News json
-    news_id Int
-	Primary news_id 
-	creation_date Day
-	category Text
-	header Text
-	content Text
-	is_published Bool
-	author Text
+    newsId Int
+    Primary newsId 
+    creation_date Day
+    category Text
+    header Text
+    content Text
+    is_published Bool
+    author Text
     deriving Show
-	
+    
 Category json
     name Text
-	Primary name
-	parent (Maybe Text)
+    Primary name
+    parent (Maybe Text)
+    deriving Show
+	
+Image 
+    news_id Int
+	image_id Int
+	Primary news_id image_id
+	content ByteString
 	deriving Show
+	
 |]
 
---makeLenses ''User
 
 instance Generic User 
 
@@ -76,12 +83,3 @@ authorAuthority = Author $ \user -> user.userAuthor
 
 noAuthority :: UserAuthority
 noAuthority = NoAuthority $ \_ -> True
-
-
-
-instance HasPagination User "login" where
-  type RangeType User "login" = Text
-  getFieldValue _ = userLogin
-  
-defaultRange :: Range "login" Text
-defaultRange = getDefaultRange (Proxy @User)  

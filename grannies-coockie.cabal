@@ -36,11 +36,14 @@ library
       DataKinds
       DeriveAnyClass
       DeriveGeneric
+      DuplicateRecordFields
       LambdaCase
+      FlexibleContexts
       OverloadedStrings
       OverloadedRecordDot
       OverloadedLists
       StrictData
+      ScopedTypeVariables
       NamedFieldPuns
       RecordWildCards
       TypeApplications
@@ -48,12 +51,16 @@ library
       TypeOperators
       FlexibleInstances
       MultiParamTypeClasses
+      PartialTypeSignatures
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
   build-depends:
       aeson
     , base
     , bytestring
+    , containers
     , cryptonite
+    , esqueleto
+    , http-client
     , http-types
     , lens
     , monad-logger
@@ -64,8 +71,9 @@ library
     , random
     , record-hasfield
     , relude
-    , servant-pagination
+    , servant-multipart
     , servant-server
+    , servant-util
     , text
     , time
     , wai
@@ -79,9 +87,13 @@ executable grannies-coockie-exe
   main-is: Main.hs
   other-modules:
       API
-      Authorization
       DBTypes
-      Handlers
+      Handlers.Authorization
+      Handlers.CategoryHandlers
+      Handlers.Handlers
+      Handlers.NewsHandlers
+      Handlers.Primitives
+      Handlers.UserHandlers
       Paths_grannies_coockie
   autogen-modules:
       Paths_grannies_coockie
@@ -92,11 +104,14 @@ executable grannies-coockie-exe
       DataKinds
       DeriveAnyClass
       DeriveGeneric
+      DuplicateRecordFields
       LambdaCase
+      FlexibleContexts
       OverloadedStrings
       OverloadedRecordDot
       OverloadedLists
       StrictData
+      ScopedTypeVariables
       NamedFieldPuns
       RecordWildCards
       TypeApplications
@@ -104,13 +119,17 @@ executable grannies-coockie-exe
       TypeOperators
       FlexibleInstances
       MultiParamTypeClasses
+      PartialTypeSignatures
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       aeson
     , base >=4.7 && <5
     , bytestring
+    , containers
     , cryptonite
+    , esqueleto
     , grannies-coockie
+    , http-client
     , http-types
     , lens
     , monad-logger
@@ -120,8 +139,9 @@ executable grannies-coockie-exe
     , persistent-postgresql
     , random
     , record-hasfield
-    , servant-pagination
+    , servant-multipart
     , servant-server
+    , servant-util
     , text
     , time
     , wai
@@ -142,11 +162,14 @@ test-suite grannies-coockie-test
       DataKinds
       DeriveAnyClass
       DeriveGeneric
+      DuplicateRecordFields
       LambdaCase
+      FlexibleContexts
       OverloadedStrings
       OverloadedRecordDot
       OverloadedLists
       StrictData
+      ScopedTypeVariables
       NamedFieldPuns
       RecordWildCards
       TypeApplications
@@ -154,13 +177,17 @@ test-suite grannies-coockie-test
       TypeOperators
       FlexibleInstances
       MultiParamTypeClasses
+      PartialTypeSignatures
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       aeson
     , base >=4.7 && <5
     , bytestring
+    , containers
     , cryptonite
+    , esqueleto
     , grannies-coockie
+    , http-client
     , http-types
     , lens
     , monad-logger
@@ -170,8 +197,9 @@ test-suite grannies-coockie-test
     , persistent-postgresql
     , random
     , record-hasfield
-    , servant-pagination
+    , servant-multipart
     , servant-server
+    , servant-util
     , text
     , time
     , wai

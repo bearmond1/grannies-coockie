@@ -22,25 +22,28 @@ description:         Please see the README on GitHub at <https://github.com/gith
 dependencies:
 - base >= 4.7 && < 5
 - aeson
+- bytestring
+- cryptonite
+- containers
 - monad-logger
 - persistent
 - persistent-postgresql
 - time
 - text
-- record-hasfield
-- warp
-- wai
 - http-types
 - mtl
 #- either
 - servant-server
-- servant-pagination
-- cryptonite
-- bytestring
+- servant-util
 - random
+- record-hasfield
 - lens
 - optics
-#- servant-pagination
+- esqueleto
+- warp
+- wai
+- http-client
+- servant-multipart
 
 
 ghc-options:
@@ -60,11 +63,14 @@ default-extensions:
 - DataKinds
 - DeriveAnyClass
 - DeriveGeneric
+- DuplicateRecordFields
 - LambdaCase
+- FlexibleContexts
 - OverloadedStrings
 - OverloadedRecordDot
 - OverloadedLists
 - StrictData
+- ScopedTypeVariables
 - NamedFieldPuns
 - RecordWildCards
 - TypeApplications
@@ -72,6 +78,7 @@ default-extensions:
 - TypeOperators
 - FlexibleInstances
 - MultiParamTypeClasses
+- PartialTypeSignatures
 
 
 library:

@@ -1,4 +1,4 @@
-module Authorization where
+module Handlers.Authorization where
 
 import Control.Monad.Reader         (ReaderT, runReaderT, lift)
 import Control.Monad.Logger         (runStderrLoggingT,runStdoutLoggingT,LoggingT)
@@ -15,21 +15,18 @@ import Crypto.KDF.PBKDF2 as PBKDF2
 import Database.Persist.Postgresql 
 import Data.Aeson ( encode )
 import DBTypes
+import Handlers.Primitives
   
   
 credentialsError :: Handler a
-credentialsError = throwError err404 { errBody = Data.Aeson.encode ("Wrong credentials." :: Text ) }
+credentialsError = throwError err401 { errBody = Data.Aeson.encode ("Wrong credentials." :: Text ) }
 
-
-runDB :: ConnectionString -> (a -> ReaderT SqlBackend (LoggingT IO ) b) -> a -> Handler b
-runDB connStr dbAction a = liftIO $ runStdoutLoggingT $ withPostgresqlConn connStr $ 
-    \backend -> runReaderT (dbAction a) backend
 
 
 checkCredentials :: ConnectionString -> UserAuthority -> Maybe Text -> Handler ()
 checkCredentials connStr authority credentials = do
   (login,pass) <- getCredentials credentials
-  mbUser <- runDB connStr getSingleUser login
+  mbUser <- runDB connStr $ getSingleUser login
   user <- case mbUser of 
             [Entity _ user] -> return user
             _ -> credentialsError
@@ -39,7 +36,7 @@ checkCredentials connStr authority credentials = do
   case authority.check user of 
     True -> return ()
     False -> credentialsError
-	
+    
   where getSingleUser :: (MonadIO m) => Text -> SqlPersistT m [Entity User]
         getSingleUser login = selectList [UserLogin ==. login] [] 
   
@@ -53,9 +50,9 @@ getCredentials credentials =
         (login:pass:[]) -> return (login,pass)
         _ -> credentialsError
     Nothing -> credentialsError
-	
-	
-	
+    
+    
+    
 
 getPasswordHash :: ByteString -> IO (ByteString,ByteString)
 getPasswordHash password = do
