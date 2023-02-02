@@ -18,6 +18,9 @@ import DBTypes
 import Handlers.Primitives
   
   
+saltingParameters = PBKDF2.Parameters { iterCounts = 10, outputLength = 20 }
+
+
 credentialsError :: Handler a
 credentialsError = throwError err401 { errBody = Data.Aeson.encode ("Wrong credentials." :: Text ) }
 
@@ -62,7 +65,6 @@ getPasswordHash password = do
   return (PBKDF2.fastPBKDF2_SHA512 params password saltBS,saltBS)
 
 
-saltingParameters = PBKDF2.Parameters { iterCounts = 10, outputLength = 20 }
 
 getHash :: ByteString -> ByteString -> ByteString
 getHash pass salt = PBKDF2.fastPBKDF2_SHA512 saltingParameters pass salt

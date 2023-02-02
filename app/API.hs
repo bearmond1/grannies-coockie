@@ -46,10 +46,14 @@ type ServerAPI =
    :<|>  "images" 
             :> MultipartForm Mem (MultipartData Mem) 
             :> Post '[JSON] Bool
-			
+
    :<|>  "images" 
-            :> Capture "image_id" Int 
+            :> Capture "image_id" Int
             :> Get '[JSON] Image
+			
+   :<|>  "images_by_newsID" 
+            :> Capture "news_id" Int
+            :> Get '[JSON] [Image]
 
 
    :<|>  "category" 
@@ -71,6 +75,7 @@ server connStr  =
   
   (postPhotosHandler connStr) :<|> 
   (getImagesHandler connStr) :<|> 
+  (getImagesByNewsHandler connStr) :<|>
   
   (createCategoryHandler connStr)  
 

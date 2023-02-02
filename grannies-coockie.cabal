@@ -56,6 +56,7 @@ library
   build-depends:
       aeson
     , base
+    , base64-bytestring
     , bytestring
     , containers
     , cryptonite
@@ -124,6 +125,7 @@ executable grannies-coockie-exe
   build-depends:
       aeson
     , base >=4.7 && <5
+    , base64-bytestring
     , bytestring
     , containers
     , cryptonite
@@ -182,6 +184,7 @@ test-suite grannies-coockie-test
   build-depends:
       aeson
     , base >=4.7 && <5
+    , base64-bytestring
     , bytestring
     , containers
     , cryptonite

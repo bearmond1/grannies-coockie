@@ -21,7 +21,7 @@ import qualified Data.List as List
 import qualified Data.Map.Strict as Map
 import Text.Read ( readMaybe )
 import Data.Text.Encoding
-import Data.Aeson
+import Data.Aeson as Aeson
 
 import DBTypes
 import Handlers.Authorization
@@ -86,7 +86,6 @@ getNewsHandler connStr limit offset createdAt createdBefore createdAfter authors
   let params = getFetchNewsParams limit offsetFilters createdAt createdBefore createdAfter authors categories sorting 
   dbNews <- runDB connStr $ getNewsDB params
   images <- runDB connStr $ getImagesByNewsDB dbNews
-  liftIO $ print images
   return $ getNewsProxy dbNews images
 
   where -- we have validate Offest Keys
@@ -97,7 +96,7 @@ getNewsHandler connStr limit offset createdAt createdBefore createdAfter authors
             ((Just s),(Just offs)) ->
               case Text.splitOn ":" offs of 
                 (primaryKey:sortingKey:[]) -> liftIO (print (primaryKey,sortingKey)) >> (validateOffestKeys primaryKey sortingKey s)
-                _ -> throwError err400 { errBody = Data.Aeson.encode ("Offset for sorted query has to contain both sorting key and primary key." :: Text ) }
+                _ -> throwError err400 { errBody = Aeson.encode ("Offset for sorted query has to contain both sorting key and primary key." :: Text ) }
             
             -- offset without sorting means offset key has to be a valid primary key
             (Nothing,(Just offs)) -> do
@@ -116,18 +115,18 @@ getNewsHandler connStr limit offset createdAt createdBefore createdAfter authors
                                   "createdAt"     -> parseDate sortingKey >>= \day -> return $  [NewsCreation_date >. day] ||. [NewsCreation_date ==. day , NewsNewsId >. parsedPrimaryKey ]
                                   "author"        -> return $ [NewsAuthor >. sortingKey] ||. [NewsAuthor ==. sortingKey , NewsNewsId >. parsedPrimaryKey ]
                                   "category"      -> return $ [NewsCategory >. sortingKey] ||. [NewsCategory ==. sortingKey , NewsNewsId >. parsedPrimaryKey ]
-                                  _ -> throwError err400 { errBody = Data.Aeson.encode ("Unknown sorting key: \"" <> sortingField <> "\"")}
+                                  _ -> throwError err400 { errBody = Aeson.encode ("Unknown sorting key: \"" <> sortingField <> "\"")}
           return sortingFieldFilter
 
         parseNewsId :: Text -> Handler Int
         parseNewsId text = case readMaybe $ unpack text :: Maybe Int of 
                             Just id -> return id
-                            Nothing -> throwError err400 { errBody = Data.Aeson.encode ("Could not parse news id: \"" <> text <> "\".")}
+                            Nothing -> throwError err400 { errBody = Aeson.encode ("Could not parse news id: \"" <> text <> "\".")}
 
         parseDate :: Text -> Handler Day
         parseDate text = case readMaybe $ unpack text :: Maybe Day of 
                             Just day -> return day
-                            Nothing -> throwError err400 { errBody = Data.Aeson.encode ("Could not parse date: \"" <> text <> "\".")}
+                            Nothing -> throwError err400 { errBody = Aeson.encode ("Could not parse date: \"" <> text <> "\".")}
 
 
 
@@ -145,8 +144,12 @@ getFetchNewsParams limit offsetFilters mbcreatedAt mbcreatedBefore mbcreatedAfte
       createdAfter = case mbcreatedAfter of 
                        Just day -> [NewsCreation_date >. day]
                        Nothing -> []
-      authorsFilter = [NewsAuthor <-. authors]
-      categoryFilter = [NewsCategory <-. categories]                  
+      authorsFilter = case authors of
+                        [] -> [] 
+                        authorsList -> [NewsAuthor <-. authors]
+      categoryFilter = case categories of 
+                         [] -> []
+                         categoriesList -> [NewsCategory <-. categories]                  
                            
       filters = createdAt ++ createdBefore ++ createdAfter ++ authorsFilter ++ categoryFilter ++ offsetFilters
       
@@ -222,11 +225,11 @@ postPhotosHandler connStr multipartData = do
         
           key_present <- case lookupInput "news_id" multipartData of
                             Right newsID -> return newsID :: Handler Text
-                            _ -> throwError err400 { errBody = Data.Aeson.encode ("Expected NewsID in reqest body." :: Text)}
+                            _ -> throwError err400 { errBody = Aeson.encode ("Expected NewsID in reqest body." :: Text)}
           
           case readMaybe $ unpack key_present :: Maybe Int of
             Just int -> return int
-            _ -> throwError err400 { errBody = Data.Aeson.encode ("Could not parse \"" <> key_present <> "\" as int.")}
+            _ -> throwError err400 { errBody = Aeson.encode ("Could not parse \"" <> key_present <> "\" as int.")}
 
 
 
@@ -235,3 +238,19 @@ getImagesByNewsDB :: (MonadIO m) => [News] -> SqlPersistT m [Image]
 getImagesByNewsDB news =
   let newsIDs = Prelude.map newsNewsId news
   in fmap fromEntities ( selectList [ImageNews_id <-. newsIDs] [] )
+  
+  
+  
+  
+getImagesHandler :: ConnectionString -> Int -> Handler Image
+getImagesHandler connStr imageID = do
+  image <- runDB connStr $ selectList [ImageImage_id ==. imageID] []
+  case fromEntities image of
+    [image] -> return image
+    _ -> throwError err404 { errBody = Aeson.encode ("Not Found" :: Text)}
+	
+	
+	
+	
+getImagesByNewsHandler :: ConnectionString -> Int -> Handler [Image]
+getImagesByNewsHandler connStr newsID = runDB connStr $ fmap fromEntities $ selectList [ImageNews_id ==. newsID] []
