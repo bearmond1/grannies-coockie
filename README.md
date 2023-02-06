@@ -5,12 +5,12 @@ Features hashing with salt, basic authentication, pagination by key.
 
 TODO:
 1) GET News returns pictures's URL - Done
-2) Google account inegration
-3) Find where to put streaming
+2) Find where to put streaming
+3) Google account inegration
 4) Write OpenAPI documentation
 5) Maybe add logging
 6) Remove prefixes in persistent
-7) Add rawSQL sorting by images count
+7) Get rid off hardcode connection string
 
 
 
@@ -32,7 +32,6 @@ API description draft:
         1) date
         2) author
         3) category
-        4) number of pictures
     
     Making sorted requests
      since server uses pagination by key instead of offset, 

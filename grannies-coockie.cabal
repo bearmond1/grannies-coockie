@@ -55,6 +55,7 @@ library
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
   build-depends:
       aeson
+    , array
     , base
     , base64-bytestring
     , bytestring
@@ -64,6 +65,7 @@ library
     , http-client
     , http-types
     , lens
+    , mmorph
     , monad-logger
     , mtl
     , optics
@@ -72,6 +74,7 @@ library
     , random
     , record-hasfield
     , relude
+    , servant
     , servant-multipart
     , servant-server
     , servant-util
@@ -89,6 +92,7 @@ executable grannies-coockie-exe
   other-modules:
       API
       DBTypes
+      Handlers.AudioHandlers
       Handlers.Authorization
       Handlers.CategoryHandlers
       Handlers.Handlers
@@ -124,6 +128,7 @@ executable grannies-coockie-exe
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       aeson
+    , array
     , base >=4.7 && <5
     , base64-bytestring
     , bytestring
@@ -134,6 +139,7 @@ executable grannies-coockie-exe
     , http-client
     , http-types
     , lens
+    , mmorph
     , monad-logger
     , mtl
     , optics
@@ -141,6 +147,7 @@ executable grannies-coockie-exe
     , persistent-postgresql
     , random
     , record-hasfield
+    , servant
     , servant-multipart
     , servant-server
     , servant-util
@@ -183,6 +190,7 @@ test-suite grannies-coockie-test
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       aeson
+    , array
     , base >=4.7 && <5
     , base64-bytestring
     , bytestring
@@ -193,6 +201,7 @@ test-suite grannies-coockie-test
     , http-client
     , http-types
     , lens
+    , mmorph
     , monad-logger
     , mtl
     , optics
@@ -200,6 +209,7 @@ test-suite grannies-coockie-test
     , persistent-postgresql
     , random
     , record-hasfield
+    , servant
     , servant-multipart
     , servant-server
     , servant-util

@@ -1,26 +1,22 @@
 module Handlers.NewsHandlers where
   
-import Control.Monad  (liftM, forM_)
+import Control.Monad                (liftM, forM_)
 import Control.Monad.IO.Class       (liftIO,MonadIO)
-import Control.Monad.Logger         (runStderrLoggingT,runStdoutLoggingT,LoggingT,MonadLogger)
 import System.Random
-import Data.Time.Clock
 import Data.Time.Calendar
-import GHC.Generics ( Generic )
+import GHC.Generics                 ( Generic )
 
 import Database.Persist.Postgresql 
 import Servant
 import Servant.Multipart
-import Network.HTTP.Client hiding (Proxy)
-import Network.HTTP.Client.MultipartFormData
+
 -- import Database.Esqueleto.Experimental ( (^.), (?.), (:&) )
 -- import qualified Database.Esqueleto.Experimental as E
 
-import Data.Text  as Text hiding ( map, length )
+import Data.Text  as Text hiding    ( map, length )
 import qualified Data.List as List
 import qualified Data.Map.Strict as Map
-import Text.Read ( readMaybe )
-import Data.Text.Encoding
+import Text.Read                    ( readMaybe )
 import Data.Aeson as Aeson
 
 import DBTypes
@@ -89,44 +85,44 @@ getNewsHandler connStr limit offset createdAt createdBefore createdAfter authors
   return $ getNewsProxy dbNews images
 
   where -- we have validate Offest Keys
-        getOffsetFilters :: Handler [Filter News] 
-        getOffsetFilters = do
-          case (sorting,offset) of
-            -- when paginate sorted query we have to have both primary and sorting keys
-            ((Just s),(Just offs)) ->
-              case Text.splitOn ":" offs of 
-                (primaryKey:sortingKey:[]) -> liftIO (print (primaryKey,sortingKey)) >> (validateOffestKeys primaryKey sortingKey s)
-                _ -> throwError err400 { errBody = Aeson.encode ("Offset for sorted query has to contain both sorting key and primary key." :: Text ) }
+    getOffsetFilters :: Handler [Filter News] 
+    getOffsetFilters = do
+       case (sorting,offset) of
+         -- when paginate sorted query we have to have both primary and sorting keys
+         ((Just s),(Just offs)) ->
+           case Text.splitOn ":" offs of 
+             (primaryKey:sortingKey:[]) -> liftIO (print (primaryKey,sortingKey)) >> (validateOffestKeys primaryKey sortingKey s)
+             _ -> throwError err400 { errBody = Aeson.encode ("Offset for sorted query has to contain both sorting key and primary key." :: Text ) }
             
-            -- offset without sorting means offset key has to be a valid primary key
-            (Nothing,(Just offs)) -> do
-              liftIO $ print offs
-              primKey <- parseNewsId offs
-              return [NewsNewsId >. primKey]
+         -- offset without sorting means offset key has to be a valid primary key
+         (Nothing,(Just offs)) -> do
+           liftIO $ print offs
+           primKey <- parseNewsId offs
+           return [NewsNewsId >. primKey]
             
-            -- without offset we`re done here
-            (_,Nothing) -> return []
+         -- without offset we`re done here
+         (_,Nothing) -> return []
         
-        -- lets make sure we got correct primary and sorting key
-        validateOffestKeys :: Text -> Text -> Text -> Handler [Filter News]
-        validateOffestKeys primaryKey sortingKey sortingField = do
-          parsedPrimaryKey <- parseNewsId primaryKey
-          sortingFieldFilter <- case sortingField of
-                                  "createdAt"     -> parseDate sortingKey >>= \day -> return $  [NewsCreation_date >. day] ||. [NewsCreation_date ==. day , NewsNewsId >. parsedPrimaryKey ]
-                                  "author"        -> return $ [NewsAuthor >. sortingKey] ||. [NewsAuthor ==. sortingKey , NewsNewsId >. parsedPrimaryKey ]
-                                  "category"      -> return $ [NewsCategory >. sortingKey] ||. [NewsCategory ==. sortingKey , NewsNewsId >. parsedPrimaryKey ]
-                                  _ -> throwError err400 { errBody = Aeson.encode ("Unknown sorting key: \"" <> sortingField <> "\"")}
-          return sortingFieldFilter
+     -- lets make sure we got correct primary and sorting key
+    validateOffestKeys :: Text -> Text -> Text -> Handler [Filter News]
+    validateOffestKeys primaryKey sortingKey sortingField = do
+      parsedPrimaryKey <- parseNewsId primaryKey
+      sortingFieldFilter <- case sortingField of
+                              "createdAt"     -> parseDate sortingKey >>= \day -> return $  [NewsCreation_date >. day] ||. [NewsCreation_date ==. day , NewsNewsId >. parsedPrimaryKey ]
+                              "author"        -> return $ [NewsAuthor >. sortingKey] ||. [NewsAuthor ==. sortingKey , NewsNewsId >. parsedPrimaryKey ]
+                              "category"      -> return $ [NewsCategory >. sortingKey] ||. [NewsCategory ==. sortingKey , NewsNewsId >. parsedPrimaryKey ]
+                              _ -> throwError err400 { errBody = Aeson.encode ("Unknown sorting key: \"" <> sortingField <> "\"")}
+      return sortingFieldFilter
 
-        parseNewsId :: Text -> Handler Int
-        parseNewsId text = case readMaybe $ unpack text :: Maybe Int of 
-                            Just id -> return id
-                            Nothing -> throwError err400 { errBody = Aeson.encode ("Could not parse news id: \"" <> text <> "\".")}
+    parseNewsId :: Text -> Handler Int
+    parseNewsId text = case readMaybe $ unpack text :: Maybe Int of 
+                        Just id -> return id
+                        Nothing -> throwError err400 { errBody = Aeson.encode ("Could not parse news id: \"" <> text <> "\".")}
 
-        parseDate :: Text -> Handler Day
-        parseDate text = case readMaybe $ unpack text :: Maybe Day of 
-                            Just day -> return day
-                            Nothing -> throwError err400 { errBody = Aeson.encode ("Could not parse date: \"" <> text <> "\".")}
+    parseDate :: Text -> Handler Day
+    parseDate text = case readMaybe $ unpack text :: Maybe Day of 
+                        Just day -> return day
+                        Nothing -> throwError err400 { errBody = Aeson.encode ("Could not parse date: \"" <> text <> "\".")}
 
 
 
@@ -214,10 +210,6 @@ postPhotosHandler connStr multipartData = do
     let image = Image { imageNews_id = newsID, imageImage_id = id, imageContent = content }
     runDB connStr $ insert image
 
-    -- liftIO $ putStrLn "Inputs:"
-    -- forM_ (inputs multipartData) $ \input ->
-      -- liftIO $ putStrLn $ "  " ++ show (iName input)++ " -> " ++ show (iValue input)
-
   return True
   
   where validateNewsId :: MultipartData Mem -> Handler Int
@@ -248,9 +240,8 @@ getImagesHandler connStr imageID = do
   case fromEntities image of
     [image] -> return image
     _ -> throwError err404 { errBody = Aeson.encode ("Not Found" :: Text)}
-	
-	
-	
+
+
 	
 getImagesByNewsHandler :: ConnectionString -> Int -> Handler [Image]
 getImagesByNewsHandler connStr newsID = runDB connStr $ fmap fromEntities $ selectList [ImageNews_id ==. newsID] []

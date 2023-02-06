@@ -1,12 +1,13 @@
-{-# LANGUAGE TypeOperators #-}
 module API where
 
 
+import Control.Monad.IO.Class       (liftIO,MonadIO)
 import Database.Persist.Postgresql 
+import Data.ByteString as BS
 import Data.Text
+import Data.Time.Calendar
 import Servant
 import Servant.Multipart
-import Data.Time.Calendar
 import Handlers.Handlers
 import DBTypes
 
@@ -61,23 +62,32 @@ type ServerAPI =
             :> ReqBody '[JSON] Category 
             :> Post '[JSON] Bool
 
+   :<|> "audio"
+            :> Capture "audio_id" Int 
+			:> StreamGet NoFraming OctetStream (SourceIO ByteString)
+
+   :<|> "upload_audio"
+            :> Post '[JSON] Bool
 
 
 
 server :: ConnectionString -> Server ServerAPI
 server connStr  = 
-  (getUsersHandler connStr) :<|> 
-  (getSingleUserHandler connStr) :<|>
-  (createUserHandler connStr) :<|>
+  (getUsersHandler connStr)        :<|> 
+  (getSingleUserHandler connStr)   :<|>
+  (createUserHandler connStr)      :<|>
   
-  (createNewsHandler connStr) :<|>
-  (getNewsHandler connStr) :<|>  
+  (createNewsHandler connStr)      :<|>
+  (getNewsHandler connStr)         :<|>  
   
-  (postPhotosHandler connStr) :<|> 
-  (getImagesHandler connStr) :<|> 
+  (postPhotosHandler connStr)      :<|> 
+  (getImagesHandler connStr)       :<|> 
   (getImagesByNewsHandler connStr) :<|>
   
-  (createCategoryHandler connStr)  
+  (createCategoryHandler connStr)  :<|>
+  
+  (getAudioStreamHandler connStr)  :<|>
+  (uploadFileToDb connStr)
 
 
 

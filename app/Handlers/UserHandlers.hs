@@ -3,19 +3,17 @@ module Handlers.UserHandlers where
 
 
 import Control.Monad.IO.Class       (liftIO,MonadIO)
-import System.Random
 import Data.Time.Calendar
-import GHC.Generics ( Generic )
+import GHC.Generics                 ( Generic )
 
 import Database.Persist.Postgresql 
 import Servant
 
-import Data.Text hiding ( map, length )
+import Data.Text hiding             ( map, length )
 import Data.Text.Encoding
 import Data.Aeson
 
 import DBTypes
-import Handlers.NewsHandlers
 import Handlers.Authorization
 import Handlers.Primitives
 
@@ -68,10 +66,7 @@ getFetchUsersParams mbLimit mbOffsetKey =
 
 
 getUsers :: (MonadIO m) => SelectParams User -> SqlPersistT m [User]
-getUsers SelectParams{..} = do
-  list <- selectList filters options
-  return $ map (\(Entity _ u) -> u) list
-
+getUsers SelectParams{..} = fmap fromEntities $ selectList filters options
 
 
 

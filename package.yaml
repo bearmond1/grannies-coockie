@@ -22,6 +22,7 @@ description:         Please see the README on GitHub at <https://github.com/gith
 dependencies:
 - base >= 4.7 && < 5
 - aeson
+- array
 - bytestring
 - base64-bytestring
 - cryptonite
@@ -33,9 +34,12 @@ dependencies:
 - text
 - http-types
 - mtl
+- mmorph
 #- either
+- servant 
 - servant-server
 - servant-util
+- servant-multipart
 - random
 - record-hasfield
 - lens
@@ -44,7 +48,6 @@ dependencies:
 - warp
 - wai
 - http-client
-- servant-multipart
 
 
 ghc-options:

@@ -1,3 +1,6 @@
+{-# LANGUAGE ExistentialQuantification #-}
+{-# LANGUAGE RankNTypes #-}
+
 module Handlers.Primitives where
 
 
@@ -13,8 +16,9 @@ import Servant
 
 
 data SelectParams a = SelectParams
-  { filters :: [Filter a]
-  , options :: [SelectOpt a] }
+  { filters  :: [Filter a]
+  , options  :: [SelectOpt a]
+  }
   
   
   

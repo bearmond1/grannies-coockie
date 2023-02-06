@@ -1,19 +1,18 @@
 module Handlers.Authorization where
 
-import Control.Monad.Reader         (ReaderT, runReaderT, lift)
-import Control.Monad.Logger         (runStderrLoggingT,runStdoutLoggingT,LoggingT)
-import Control.Monad.IO.Class       (liftIO,MonadIO)
-import System.Random ( randomIO )
 
-import Data.ByteString ( ByteString, singleton )
-import Data.Text ( Text, splitOn )
-import Data.Text.Encoding ( encodeUtf8 )
-import Data.Word ( Word8 )
+import Control.Monad.IO.Class       (liftIO,MonadIO)
+import System.Random                ( randomIO )
+
+import Data.ByteString              ( ByteString, singleton )
+import Data.Text                    ( Text, splitOn )
+import Data.Text.Encoding           ( encodeUtf8 )
+import Data.Word                    ( Word8 )
 
 import Servant
 import Crypto.KDF.PBKDF2 as PBKDF2
 import Database.Persist.Postgresql 
-import Data.Aeson ( encode )
+import Data.Aeson                   ( encode )
 import DBTypes
 import Handlers.Primitives
   
