@@ -1,11 +1,12 @@
 module Handlers.AudioHandlers where
 
 
+import           Data.Aeson as Aeson
 import           Data.ByteString as BS
 import qualified Data.ByteString.Lazy as LBS
 import           Database.Persist.Postgresql 
 import           Data.Text as Text
-import           Control.Concurrent           (threadDelay)
+import           GHC.Generics (Generic)
 import           Control.Monad                (liftM, forM_)
 import           Control.Monad.Morph          ( lift )
 import           Control.Monad.IO.Class       (liftIO,MonadIO)
@@ -13,6 +14,7 @@ import           Control.Monad.Reader         (ReaderT, runReaderT, lift)
 import           Control.Monad.Logger         (runStderrLoggingT,runStdoutLoggingT,LoggingT)
 import           Servant.Types.SourceT
 import           Servant
+import           Servant.Multipart
 import           Servant.API.Stream
 import           System.Random
 import           Handlers.Primitives
@@ -51,14 +53,30 @@ uploadFileToDb connStr = do
   id <- liftIO randomIO :: Handler Int
   -- split file into 1Mb chunks
   -- check for more efficient way
-  let (byteStrList,_,_) = myFunc ([], file, 0)
+  let (byteStrList,_,_) = toChunks ([], file, 0)
       megabyte = 2^20 :: Int
-      myFunc :: ([(Int,ByteString)],ByteString,Int) -> ([(Int,ByteString)],ByteString,Int)
-      myFunc (list, file, index) =  
-           let (chunk,rest) = BS.splitAt megabyte file
-           in if BS.length file > megabyte
-                 then myFunc ((list <> [(index,chunk)]) , rest, index + 1)
-                 else (list <> [(index,chunk)],BS.empty,index)
-      audioArray = Prelude.map (\(index,bytestr) -> Audio{ audioAudio_id = id, audioIndex = index, audioContent = bytestr } ) byteStrList
+      toChunks :: ([(Int,ByteString)],ByteString,Int) -> ([(Int,ByteString)],ByteString,Int)
+      toChunks (list, file, index) =  
+        let (chunk,rest) = BS.splitAt megabyte file
+        in if BS.length file > megabyte
+             then toChunks ((list <> [(index,chunk)]) , rest, index + 1)
+             else (list <> [(index,chunk)],BS.empty,index)
+      bytestrToObject = \(index,bytestr) -> Audio{ audioAudio_id = id, audioIndex = index, audioContent = bytestr }
+      audioArray = Prelude.map bytestrToObject byteStrList
   mapM_ (\audio -> runDB connStr $ insert audio) audioArray
   return True
+  
+  
+
+
+-- data AudioPostType
+  -- = AudioPostType 
+    -- { audio_name :: Text
+	-- , index :: Int
+	-- , data_piece :: ByteString
+	-- }
+	-- deriving (Eq,Show,Generic,FromJSON)
+  
+  
+uploadAudioHandler :: ConnectionString -> MultipartData Mem -> Handler Bool
+uploadAudioHandler connStr audio = undefined

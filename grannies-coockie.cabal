@@ -78,6 +78,7 @@ library
     , servant-multipart
     , servant-server
     , servant-util
+    , split
     , text
     , time
     , wai
@@ -151,6 +152,7 @@ executable grannies-coockie-exe
     , servant-multipart
     , servant-server
     , servant-util
+    , split
     , text
     , time
     , wai
@@ -213,6 +215,7 @@ test-suite grannies-coockie-test
     , servant-multipart
     , servant-server
     , servant-util
+    , split
     , text
     , time
     , wai

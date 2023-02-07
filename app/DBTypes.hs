@@ -62,7 +62,7 @@ Image json
 	content ByteString
 	deriving Show
 
-Audio
+Audio json
     audio_id Int
 	index Int
 	Primary audio_id index

@@ -66,7 +66,8 @@ type ServerAPI =
             :> Capture "audio_id" Int 
 			:> StreamGet NoFraming OctetStream (SourceIO ByteString)
 
-   :<|> "upload_audio"
+   :<|> "upload_audio" 
+            :> MultipartForm Mem (MultipartData Mem) 
             :> Post '[JSON] Bool
 
 
@@ -87,7 +88,7 @@ server connStr  =
   (createCategoryHandler connStr)  :<|>
   
   (getAudioStreamHandler connStr)  :<|>
-  (uploadFileToDb connStr)
+  (uploadAudioHandler connStr)
 
 
 

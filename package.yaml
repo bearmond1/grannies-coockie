@@ -27,12 +27,14 @@ dependencies:
 - base64-bytestring
 - cryptonite
 - containers
+- esqueleto
 - monad-logger
 - persistent
 - persistent-postgresql
 - time
 - text
 - http-types
+- http-client
 - mtl
 - mmorph
 #- either
@@ -44,10 +46,9 @@ dependencies:
 - record-hasfield
 - lens
 - optics
-- esqueleto
+- split
 - warp
 - wai
-- http-client
 
 
 ghc-options:

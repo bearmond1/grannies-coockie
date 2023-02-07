@@ -5,12 +5,12 @@ Features hashing with salt, basic authentication, pagination by key.
 
 TODO:
 1) GET News returns pictures's URL - Done
-2) Find where to put streaming
-3) Google account inegration
-4) Write OpenAPI documentation
-5) Maybe add logging
-6) Remove prefixes in persistent
-7) Get rid off hardcode connection string
+2) Streaming - Done
+3) Get rid off hardcode connection string and port - Done
+4) Google account inegration
+5) Write OpenAPI documentation
+6) Maybe add logging
+7) Remove prefixes in persistent
 
 
 
