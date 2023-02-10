@@ -1,16 +1,19 @@
 # grannies-coockie
 
 Backend for simple news site, powered by warp, persistent, servant.
-Features hashing with salt, basic authentication, pagination by key.
+Features data streaming, hashing with salt, basic authentication, pagination by key.
 
 TODO:
 1) GET News returns pictures's URL - Done
 2) Streaming - Done
 3) Get rid off hardcode connection string and port - Done
-4) Google account inegration
-5) Write OpenAPI documentation
-6) Maybe add logging
-7) Remove prefixes in persistent
+4) OpenID - some day later
+5) Pictures get headers - fixed
+6) Write tests
+7) Make documentation
+8) Maybe add logging
+9) Remove prefixes in persistent
+10) Check error codes
 
 
 

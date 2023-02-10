@@ -7,6 +7,7 @@ import Data.Time.Calendar
 import GHC.Generics                 ( Generic )
 
 import Database.Persist.Postgresql 
+import Database.Persist.Types
 import Servant
 
 import Data.Text hiding             ( map, length )
@@ -91,5 +92,31 @@ createUserHandler connStr user = runDB connStr $ writeNewUserDB (proxyToUser use
 writeNewUserDB :: (MonadIO m) => User -> SqlPersistT m User
 writeNewUserDB user = do
   (pass_hash,salt) <- liftIO $ getPasswordHash user.userPassword
-  insert user{ userPassword = pass_hash, userSalt = salt }
+  insert user{ userPassword = pass_hash, userSalt = salt, userAdmin = False, userAuthor = False }
   return user
+  
+  
+  
+grantAuthorHandler :: ConnectionString -> Maybe Text -> Text -> Handler Bool
+grantAuthorHandler connStr credentials login = do
+  checkCredentials connStr adminAuthority credentials
+  let psVal = PersistText login
+  eithrKey <- case keyFromValues [psVal] of
+                     Left text -> credentialsError
+                     Right key -> return key
+  runDB connStr $ update eithrKey [UserAuthor =. True]
+  return True
+  
+  
+  
+
+grantAdminHandler :: ConnectionString -> Maybe Text -> Text -> Handler Bool
+grantAdminHandler connStr credentials login = do
+  checkCredentials connStr adminAuthority credentials
+  let psVal = PersistText login
+  eithrKey <- case keyFromValues [psVal] of
+                     Left text -> credentialsError
+                     Right key -> return key
+  runDB connStr $ update eithrKey [UserAdmin =. True]
+  return True
+  

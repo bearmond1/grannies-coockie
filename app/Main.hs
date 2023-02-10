@@ -2,18 +2,14 @@ module Main (main) where
 
 
 import           Text.Read                    (readMaybe)
-import           Database.Persist.Postgresql
 import           Network.Wai.Handler.Warp     (run)
-import           API
+import           API                          (app)
 import           System.Environment           
-import           Control.Concurrent           (threadDelay)
 import qualified Data.ByteString.Char8 as C
-import           Data.List.Split              (splitOn)
-import           Control.Monad.Morph          (lift)
 
 
 
-
+-- expecting 'db_connection_string' and 'server_port' enviroment variables
 main :: IO ()
 main = do
   print "Hello" 

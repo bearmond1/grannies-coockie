@@ -1,23 +1,20 @@
 module Handlers.AudioHandlers where
 
 
-import           Data.Aeson as Aeson
 import           Data.ByteString as BS
 import qualified Data.ByteString.Lazy as LBS
 import           Database.Persist.Postgresql 
 import           Data.Text as Text
-import           GHC.Generics (Generic)
-import           Control.Monad                (liftM, forM_)
-import           Control.Monad.Morph          ( lift )
 import           Control.Monad.IO.Class       (liftIO,MonadIO)
 import           Control.Monad.Reader         (ReaderT, runReaderT, lift)
 import           Control.Monad.Logger         (runStderrLoggingT,runStdoutLoggingT,LoggingT)
+import           Control.Monad.Except         (runExceptT)
 import           Servant.Types.SourceT
 import           Servant
 import           Servant.Multipart
-import           Servant.API.Stream
 import           System.Random
 import           Handlers.Primitives
+import           Handlers.Authorization
 import           DBTypes
 
 
@@ -44,39 +41,40 @@ getAuidioPieceDB audioID index = do
   case result of
     [Entity _ (Audio{ audioContent })] -> return audioContent
     _ -> return BS.empty
-    
-    
-    
-uploadFileToDb :: ConnectionString -> Handler Bool
-uploadFileToDb connStr = do
-  file <- liftIO $ BS.readFile "C:\\Users\\madOr\\Downloads\\npp.8.4.8.Installer.x64.exe"
+
+  
+  
+  
+  
+uploadAudioHandler :: ConnectionString -> Maybe Text -> MultipartData Mem -> Handler Bool
+uploadAudioHandler connStr credentials multipartData = do
+  checkCredentials connStr authorAuthority credentials
+  -- we expect one file in request
+  let [contents] = Prelude.map (LBS.toStrict . fdPayload) $ files multipartData
   id <- liftIO randomIO :: Handler Int
-  -- split file into 1Mb chunks
-  -- check for more efficient way
-  let (byteStrList,_,_) = toChunks ([], file, 0)
-      megabyte = 2^20 :: Int
-      toChunks :: ([(Int,ByteString)],ByteString,Int) -> ([(Int,ByteString)],ByteString,Int)
-      toChunks (list, file, index) =  
-        let (chunk,rest) = BS.splitAt megabyte file
-        in if BS.length file > megabyte
-             then toChunks ((list <> [(index,chunk)]) , rest, index + 1)
-             else (list <> [(index,chunk)],BS.empty,index)
+  let (byteStrList,_,_) = to1MbChunks ([], contents, 0)
       bytestrToObject = \(index,bytestr) -> Audio{ audioAudio_id = id, audioIndex = index, audioContent = bytestr }
       audioArray = Prelude.map bytestrToObject byteStrList
   mapM_ (\audio -> runDB connStr $ insert audio) audioArray
   return True
   
-  
 
-
--- data AudioPostType
-  -- = AudioPostType 
-    -- { audio_name :: Text
-	-- , index :: Int
-	-- , data_piece :: ByteString
-	-- }
-	-- deriving (Eq,Show,Generic,FromJSON)
-  
-  
-uploadAudioHandler :: ConnectionString -> MultipartData Mem -> Handler Bool
-uploadAudioHandler connStr audio = undefined
+to1MbChunks :: ([(Int,ByteString)],ByteString,Int) -> ([(Int,ByteString)],ByteString,Int)
+to1MbChunks (list, file, index) =  
+  let (chunk,rest) = BS.splitAt megabyte file
+  in if BS.length file > megabyte
+      then to1MbChunks ((list <> [(index,chunk)]) , rest, index + 1)
+      else (list <> [(index,chunk)],BS.empty,index)
+  where 
+    megabyte = 2^20 :: Int
+	
+	
+	
+	
+uploadAudioStreamHandler :: ConnectionString -> Maybe Text -> AudioID -> SourceIO ByteString -> Handler Bool
+uploadAudioStreamHandler connStr credentials audioID source = do
+  checkCredentials connStr authorAuthority credentials
+  audioPiece <- liftIO $ runExceptT $ runSourceT source
+  liftIO $ print audioPiece
+ -- runDB connStr $ insert 
+  return True

@@ -23,6 +23,7 @@ import DBTypes
 import Handlers.Authorization
 import Handlers.Primitives
 
+import qualified Data.ByteString as BS
 import qualified Data.ByteString.Lazy as LBS
 
 
@@ -198,11 +199,10 @@ getNewsDB SelectParams{..} = fmap fromEntities $ selectList filters options
 
 
 
-postPhotosHandler :: ConnectionString -> MultipartData Mem -> Handler Bool
-postPhotosHandler connStr multipartData = do
-
+postPhotosHandler :: ConnectionString -> Maybe Text -> MultipartData Mem -> Handler Bool
+postPhotosHandler connStr credentials multipartData = do
+  checkCredentials connStr authorAuthority credentials
   newsID <- validateNewsId multipartData
-
   let contents = Prelude.map (LBS.toStrict . fdPayload) $ files multipartData
 
   forM_ contents $ \content -> do
@@ -217,11 +217,12 @@ postPhotosHandler connStr multipartData = do
         
           key_present <- case lookupInput "news_id" multipartData of
                             Right newsID -> return newsID :: Handler Text
-                            _ -> throwError err400 { errBody = Aeson.encode ("Expected NewsID in reqest body." :: Text)}
+                            _ -> throwError err400 { errBody = Aeson.encode ("Expected NewsID in reqest body." :: Text) }
           
           case readMaybe $ unpack key_present :: Maybe Int of
             Just int -> return int
-            _ -> throwError err400 { errBody = Aeson.encode ("Could not parse \"" <> key_present <> "\" as int.")}
+            _ -> throwError err400 { errBody = Aeson.encode ("Could not parse \"" <> key_present <> "\" as int.") }
+
 
 
 
@@ -234,11 +235,11 @@ getImagesByNewsDB news =
   
   
   
-getImagesHandler :: ConnectionString -> Int -> Handler Image
+getImagesHandler :: ConnectionString -> Int -> Handler BS.ByteString
 getImagesHandler connStr imageID = do
-  image <- runDB connStr $ selectList [ImageImage_id ==. imageID] []
+  image <- runDB connStr $  selectList [ImageImage_id ==. imageID] [] 
   case fromEntities image of
-    [image] -> return image
+    [Image { imageContent , ..} ] -> return imageContent
     _ -> throwError err404 { errBody = Aeson.encode ("Not Found" :: Text)}
 
 

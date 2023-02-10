@@ -1,8 +1,8 @@
 module API where
 
 
-import Control.Monad.IO.Class       (liftIO,MonadIO)
 import Database.Persist.Postgresql 
+import Control.Monad.IO.Class       (liftIO,MonadIO)
 import Data.ByteString as BS
 import Data.Text
 import Data.Time.Calendar
@@ -10,27 +10,44 @@ import Servant
 import Servant.Multipart
 import Handlers.Handlers
 import DBTypes
+import ImageContentType
 
 
 
 type ServerAPI =
 
+
         "users" 
             :> Header "limit" Int
             :> Header "offset-key" Text
             :> Get '[JSON] [UserProxyType]
+
    :<|> "users" 
             :> Capture "login" Text 
             :> Get '[JSON] UserProxyType  
+
+   -- registration for all
    :<|> "users" 
             :> ReqBody '[JSON] UserProxyType 
             :> Post '[JSON] Bool  
+   -- author / admin priveleges can grant only admin
+   :<|> "users" :> "grant_author"
+            :> Header "Authorization" Text 
+			:> Capture "login" Text
+			:> Patch '[JSON] Bool
+
+   :<|> "users" :> "grant_admin"
+            :> Header "Authorization" Text 
+			:> Capture "login" Text
+			:> Patch '[JSON] Bool
+
 
    :<|> "news" 
-            -- maybe its possible to put in here some type which will assure header has correct format
+            -- maybe its possible to put in here some type which will assure header has correct format of (user:password)
             :> Header "Authorization" Text 
             :> ReqBody '[JSON] News 
-            :> Post '[JSON] Bool              
+            :> Post '[JSON] Bool    
+
    :<|> "news" 
             :> Header "limit" Int
             :> Header "offset-key" Text
@@ -40,34 +57,49 @@ type ServerAPI =
             :> QueryParam "createdAfter" Day  
             :> QueryParams "author" Text
             :> QueryParams "category" Text
-  
+
             :> QueryParam "sort_by" Text 
             :> Get '[JSON] [NewsProxyType]  
 
+
    :<|>  "images" 
+            :> Header "Authorization" Text 
             :> MultipartForm Mem (MultipartData Mem) 
             :> Post '[JSON] Bool
 
    :<|>  "images" 
             :> Capture "image_id" Int
-            :> Get '[JSON] Image
-			
+            :> Get '[JPEG] ByteString
+
    :<|>  "images_by_newsID" 
             :> Capture "news_id" Int
             :> Get '[JSON] [Image]
 
 
    :<|>  "category" 
+            :> Capture "category_id" Text
+            :> Get '[JSON] Category
+
+   :<|>  "category" 
             :> Header "Authorization" Text 
             :> ReqBody '[JSON] Category 
             :> Post '[JSON] Bool
 
+
+   -- audio stream source
    :<|> "audio"
             :> Capture "audio_id" Int 
 			:> StreamGet NoFraming OctetStream (SourceIO ByteString)
-
-   :<|> "upload_audio" 
+   -- we can manage small audio in single piece
+   :<|> "upload_audio" :> "small"
+            :> Header "Authorization" Text 
             :> MultipartForm Mem (MultipartData Mem) 
+            :> Post '[JSON] Bool
+   -- and big ones via stream
+   :<|> "upload_audio" :> "small"
+            :> Header "Authorization" Text 
+            :> Capture "audio_id" Int 
+            :> StreamBody NoFraming OctetStream (SourceIO BS.ByteString)
             :> Post '[JSON] Bool
 
 
@@ -77,6 +109,8 @@ server connStr  =
   (getUsersHandler connStr)        :<|> 
   (getSingleUserHandler connStr)   :<|>
   (createUserHandler connStr)      :<|>
+  (grantAuthorHandler connStr)     :<|>
+  (grantAdminHandler connStr)      :<|>
   
   (createNewsHandler connStr)      :<|>
   (getNewsHandler connStr)         :<|>  
@@ -85,10 +119,12 @@ server connStr  =
   (getImagesHandler connStr)       :<|> 
   (getImagesByNewsHandler connStr) :<|>
   
+  (getCategoryHandler connStr)     :<|>
   (createCategoryHandler connStr)  :<|>
   
   (getAudioStreamHandler connStr)  :<|>
-  (uploadAudioHandler connStr)
+  (uploadAudioHandler connStr)     :<|>
+  (uploadAudioStreamHandler connStr)
 
 
 
