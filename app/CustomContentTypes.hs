@@ -1,4 +1,4 @@
-module ImageContentType where
+module CustomContentTypes where
 
 import Servant.API.ContentTypes
 import Data.Typeable
@@ -17,4 +17,22 @@ instance MimeRender JPEG ByteString where
   
   
 instance MimeUnrender JPEG ByteString where
+  mimeUnrender _ val = Right $ toStrict val
+
+
+
+
+
+data OGG deriving Typeable
+
+
+instance Accept OGG where
+  contentType _ = "application/ogg"
+  
+  
+instance MimeRender OGG ByteString where
+  mimeRender _ val = fromStrict val
+  
+  
+instance MimeUnrender OGG ByteString where
   mimeUnrender _ val = Right $ toStrict val

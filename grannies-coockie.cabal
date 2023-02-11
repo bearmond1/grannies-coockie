@@ -92,6 +92,7 @@ executable grannies-coockie-exe
   main-is: Main.hs
   other-modules:
       API
+      CustomContentTypes
       DBTypes
       Handlers.AudioHandlers
       Handlers.Authorization
@@ -100,7 +101,6 @@ executable grannies-coockie-exe
       Handlers.NewsHandlers
       Handlers.Primitives
       Handlers.UserHandlers
-      ImageContentType
       Paths_grannies_coockie
   autogen-modules:
       Paths_grannies_coockie

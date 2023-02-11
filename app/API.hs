@@ -10,7 +10,7 @@ import Servant
 import Servant.Multipart
 import Handlers.Handlers
 import DBTypes
-import ImageContentType
+import CustomContentTypes
 
 
 
@@ -87,16 +87,30 @@ type ServerAPI =
 
 
    -- audio stream source
-   :<|> "audio"
+   :<|> "audio" :> "download"
             :> Capture "audio_id" Int 
-			:> StreamGet NoFraming OctetStream (SourceIO ByteString)
+			:> StreamGet NoFraming OGG (Headers '[Header "content-disposition" Text] (SourceIO ByteString))
+
+   :<|> "audio" :> "play"
+            :> Header "range" Text
+            :> Capture "audio_id" Int 
+			:> GetPartialContent '[OctetStream] 
+			  (Headers 
+			  '[ Header "accept-ranges" Text
+			   , Header "content-length" Int
+			   , Header "content-range" Text
+			   , Header "content-type" Text
+			   ] 
+			   ByteString )
+
    -- we can manage small audio in single piece
-   :<|> "upload_audio" :> "small"
+   :<|> "audio" :> "upload" :> "small"
             :> Header "Authorization" Text 
+            :> Capture "audio_id" Int 
             :> MultipartForm Mem (MultipartData Mem) 
             :> Post '[JSON] Bool
    -- and big ones via stream
-   :<|> "upload_audio" :> "small"
+   :<|> "audio" :> "upload" :> "big"
             :> Header "Authorization" Text 
             :> Capture "audio_id" Int 
             :> StreamBody NoFraming OctetStream (SourceIO BS.ByteString)
@@ -123,6 +137,7 @@ server connStr  =
   (createCategoryHandler connStr)  :<|>
   
   (getAudioStreamHandler connStr)  :<|>
+  (playAudioHandler connStr)       :<|>
   (uploadAudioHandler connStr)     :<|>
   (uploadAudioStreamHandler connStr)
 
