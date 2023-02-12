@@ -9,13 +9,12 @@ import           Data.Text as Text
 import           Text.Read                    (readMaybe)
 import           Data.String                  (fromString)
 import           Control.Monad.IO.Class       (liftIO,MonadIO)
-import           Control.Monad.Reader         (ReaderT, runReaderT, lift)
-import           Control.Monad.Logger         (runStderrLoggingT,runStdoutLoggingT,LoggingT)
+import           Control.Monad.Reader         (runReaderT)
+import           Control.Monad.Logger         (runStderrLoggingT,runStdoutLoggingT)
 import           Control.Monad.Except         (runExceptT)
 import           Servant.Types.SourceT
 import           Servant
 import           Servant.Multipart
-import           System.Random
 import           Handlers.Primitives
 import           Handlers.Authorization
 import           DBTypes

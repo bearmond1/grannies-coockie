@@ -61,23 +61,20 @@ library
     , bytestring
     , containers
     , cryptonite
-    , esqueleto
     , http-client
     , http-types
-    , lens
     , mmorph
     , monad-logger
     , mtl
-    , optics
     , persistent
     , persistent-postgresql
     , random
     , record-hasfield
     , relude
     , servant
+    , servant-docs
     , servant-multipart
     , servant-server
-    , servant-util
     , split
     , text
     , time
@@ -94,6 +91,7 @@ executable grannies-coockie-exe
       API
       CustomContentTypes
       DBTypes
+      Docs
       Handlers.AudioHandlers
       Handlers.Authorization
       Handlers.CategoryHandlers
@@ -136,23 +134,20 @@ executable grannies-coockie-exe
     , bytestring
     , containers
     , cryptonite
-    , esqueleto
     , grannies-coockie
     , http-client
     , http-types
-    , lens
     , mmorph
     , monad-logger
     , mtl
-    , optics
     , persistent
     , persistent-postgresql
     , random
     , record-hasfield
     , servant
+    , servant-docs
     , servant-multipart
     , servant-server
-    , servant-util
     , split
     , text
     , time
@@ -199,23 +194,20 @@ test-suite grannies-coockie-test
     , bytestring
     , containers
     , cryptonite
-    , esqueleto
     , grannies-coockie
     , http-client
     , http-types
-    , lens
     , mmorph
     , monad-logger
     , mtl
-    , optics
     , persistent
     , persistent-postgresql
     , random
     , record-hasfield
     , servant
+    , servant-docs
     , servant-multipart
     , servant-server
-    , servant-util
     , split
     , text
     , time

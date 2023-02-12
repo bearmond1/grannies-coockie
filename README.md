@@ -1,7 +1,7 @@
 # grannies-coockie
 
 Backend for simple news site, powered by warp, persistent, servant.
-Features data streaming, hashing with salt, basic authentication, pagination by key.
+Features data streaming, audio playing, hashing with salt, basic authentication, pagination by key.
 
 TODO:
 1) GET News returns pictures's URL - Done
@@ -9,11 +9,12 @@ TODO:
 3) Get rid off hardcode connection string and port - Done
 4) OpenID - some day later
 5) Pictures get headers - fixed
-6) Write tests
-7) Make documentation
-8) Maybe add logging
-9) Remove prefixes in persistent
-10) Check error codes
+6) Audio playing - Done
+7) Write tests
+8) Make documentation
+9) Maybe add logging
+10) Remove prefixes in persistent
+11) Check error codes
 
 
 

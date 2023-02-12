@@ -2,7 +2,6 @@ module API where
 
 
 import Database.Persist.Postgresql 
-import Control.Monad.IO.Class       (liftIO,MonadIO)
 import Data.ByteString as BS
 import Data.Text
 import Data.Time.Calendar
@@ -11,6 +10,7 @@ import Servant.Multipart
 import Handlers.Handlers
 import DBTypes
 import CustomContentTypes
+
 
 
 
@@ -146,6 +146,7 @@ server connStr  =
 
 userAPI :: Proxy ServerAPI
 userAPI = Proxy
+
 
 
 app :: ConnectionString -> Application

@@ -22,12 +22,13 @@ description:         Please see the README on GitHub at <https://github.com/gith
 dependencies:
 - base >= 4.7 && < 5
 - aeson
+#- aeson-pretty
 - array
 - bytestring
 - base64-bytestring
 - cryptonite
 - containers
-- esqueleto
+#- esqueleto
 - monad-logger
 - persistent
 - persistent-postgresql
@@ -39,14 +40,18 @@ dependencies:
 - mmorph
 #- either
 - servant 
+- servant-docs
+#- servant-openapi3
 - servant-server
-- servant-util
+#- servant-util
 - servant-multipart
 - random
 - record-hasfield
-- lens
-- optics
+#- lens
+#- optics
 - split
+#- servant-swagger
+#- swagger2
 - warp
 - wai
 
