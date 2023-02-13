@@ -8,12 +8,12 @@ import Database.Persist.Postgresql
 import Control.Monad.Reader         (ReaderT, runReaderT, lift)
 import Control.Monad.Logger         (runStderrLoggingT,runStdoutLoggingT,LoggingT)
 import Control.Monad.IO.Class       (liftIO,MonadIO)
-
+import System.Log.FastLogger
 import Servant
 
 
 
-
+type HandlerLog = LogStr -> Handler ()
 
 data SelectParams a = SelectParams
   { filters  :: [Filter a]

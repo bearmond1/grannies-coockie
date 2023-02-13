@@ -17,6 +17,7 @@ import Data.Aeson
 import DBTypes
 import Handlers.Authorization
 import Handlers.Primitives
+import System.Log.FastLogger
 
 
 
@@ -33,7 +34,7 @@ data UserProxyType
     , admin :: Bool
     , author :: Bool
     }
-    deriving (Eq,Show, Generic, ToJSON, FromJSON)
+    deriving (Eq,Show,Generic,ToJSON,FromJSON)
     
     
 userToProxy :: User -> UserProxyType
@@ -47,10 +48,11 @@ proxyToUser (UserProxyType{..}) = User login (encodeUtf8 pass) "" email phone_nu
   
 
   
-getUsersHandler :: ConnectionString -> Maybe Int -> Maybe Text -> Handler [UserProxyType]
-getUsersHandler connStr mbLimit mbOffsetKey = do
+getUsersHandler :: ConnectionString -> HandlerLog -> Maybe Int -> Maybe Text -> Handler [UserProxyType]
+getUsersHandler connStr logger mbLimit mbOffsetKey = do
   let queryParams = getFetchUsersParams mbLimit mbOffsetKey
   users <- runDB connStr $ getUsers queryParams
+  logger $ "Fetched users: " <> (toLogStr $ show users)
   return $ fmap userToProxy users 
 
 
@@ -71,12 +73,14 @@ getUsers SelectParams{..} = fmap fromEntities $ selectList filters options
 
 
 
-getSingleUserHandler :: ConnectionString -> Text -> Handler UserProxyType
-getSingleUserHandler connStr login = do
+getSingleUserHandler :: ConnectionString -> HandlerLog -> Text -> Handler UserProxyType
+getSingleUserHandler connStr logger login = do
   users <- runDB connStr $ getSingleUser login
   case users of 
-    [Entity _ user] -> return $ userToProxy user
-    _ -> credentialsError
+    [Entity _ user] -> do
+      logger $ "Fetched user: " <> (toLogStr $ show users)
+      return $ userToProxy user
+    _ -> throwError err400
 
 
 getSingleUser :: (MonadIO m) => Text -> SqlPersistT m [Entity User]
@@ -85,8 +89,11 @@ getSingleUser login = selectList [UserLogin ==. login] []
 
 
 
-createUserHandler :: ConnectionString -> UserProxyType -> Handler Bool
-createUserHandler connStr user = runDB connStr $ writeNewUserDB (proxyToUser user) >> return True
+createUserHandler :: ConnectionString -> HandlerLog -> UserProxyType -> Handler Bool
+createUserHandler connStr logger user = do
+  runDB connStr $ writeNewUserDB (proxyToUser user) 
+  logger $ "Created user: " <> (toLogStr $ show user)
+  return True
 
 
 writeNewUserDB :: (MonadIO m) => User -> SqlPersistT m User
@@ -97,26 +104,32 @@ writeNewUserDB user = do
   
   
   
-grantAuthorHandler :: ConnectionString -> Maybe Text -> Text -> Handler Bool
-grantAuthorHandler connStr credentials login = do
-  checkCredentials connStr adminAuthority credentials
+grantAuthorHandler :: ConnectionString -> HandlerLog -> Maybe Text -> Text -> Handler Bool
+grantAuthorHandler connStr logger credentials login = do
+  admin <- checkCredentials connStr adminAuthority credentials
   let psVal = PersistText login
   eithrKey <- case keyFromValues [psVal] of
-                     Left text -> credentialsError
-                     Right key -> return key
+                Left text -> credentialsError
+                Right key -> return key
   runDB connStr $ update eithrKey [UserAuthor =. True]
+  logger $ 
+    "Granted author privileges to user " <> (toLogStr login) <>
+	" by " <> (toLogStr admin) <> "."
   return True
   
   
   
 
-grantAdminHandler :: ConnectionString -> Maybe Text -> Text -> Handler Bool
-grantAdminHandler connStr credentials login = do
-  checkCredentials connStr adminAuthority credentials
+grantAdminHandler :: ConnectionString -> HandlerLog -> Maybe Text -> Text -> Handler Bool
+grantAdminHandler connStr logger credentials login = do
+  admin <- checkCredentials connStr adminAuthority credentials
   let psVal = PersistText login
   eithrKey <- case keyFromValues [psVal] of
                      Left text -> credentialsError
                      Right key -> return key
   runDB connStr $ update eithrKey [UserAdmin =. True]
+  logger $ 
+    "Granted admin privileges to user " <> (toLogStr login) <>
+	" by " <> (toLogStr admin) <> "."
   return True
   

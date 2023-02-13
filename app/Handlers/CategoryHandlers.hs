@@ -8,18 +8,21 @@ import DBTypes
 import Servant
 import Handlers.Authorization
 import Handlers.Primitives
+import System.Log.FastLogger
 
 
 
-createCategoryHandler :: ConnectionString -> Maybe Text -> Category -> Handler Bool
-createCategoryHandler connStr credentials category = do
-  checkCredentials connStr adminAuthority credentials
+createCategoryHandler :: ConnectionString -> HandlerLog -> Maybe Text -> Category -> Handler Bool
+createCategoryHandler connStr logger credentials category = do
+  admin <- checkCredentials connStr adminAuthority credentials
   runDB connStr $ insert category
+  logger . toLogStr $ "Created new category - '" <> category.categoryName <> "' by " <> admin
   return True
   
   
-getCategoryHandler :: ConnectionString -> Text -> Handler Category
-getCategoryHandler connStr categoryName = do
+getCategoryHandler :: ConnectionString -> HandlerLog -> Text -> Handler Category
+getCategoryHandler connStr logger categoryName = do
+  logger . toLogStr $ "Fetching category " <> categoryName
   result <- runDB connStr $ selectList [CategoryName ==. categoryName] []
   case result of
     [Entity _ category] -> return category

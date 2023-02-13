@@ -25,7 +25,7 @@ credentialsError = throwError err401 { errBody = Data.Aeson.encode ("Wrong crede
 
 
 
-checkCredentials :: ConnectionString -> UserAuthority -> Maybe Text -> Handler ()
+checkCredentials :: ConnectionString -> UserAuthority -> Maybe Text -> Handler Text
 checkCredentials connStr authority credentials = do
   (login,pass) <- getCredentials credentials
   mbUser <- runDB connStr $ getSingleUser login
@@ -36,7 +36,7 @@ checkCredentials connStr authority credentials = do
     then return ()
     else credentialsError
   case authority.check user of 
-    True -> return ()
+    True -> return user.userLogin
     False -> credentialsError
     
   where getSingleUser :: (MonadIO m) => Text -> SqlPersistT m [Entity User]

@@ -10,7 +10,7 @@ import Servant.Multipart
 import Handlers.Handlers
 import DBTypes
 import CustomContentTypes
-
+import System.Log.FastLogger
 
 
 
@@ -118,28 +118,28 @@ type ServerAPI =
 
 
 
-server :: ConnectionString -> Server ServerAPI
-server connStr  = 
-  (getUsersHandler connStr)        :<|> 
-  (getSingleUserHandler connStr)   :<|>
-  (createUserHandler connStr)      :<|>
-  (grantAuthorHandler connStr)     :<|>
-  (grantAdminHandler connStr)      :<|>
+server :: ConnectionString -> HandlerLog -> Server ServerAPI
+server connStr logger = 
+  (getUsersHandler connStr logger)        :<|> 
+  (getSingleUserHandler connStr logger)   :<|>
+  (createUserHandler connStr logger)      :<|>
+  (grantAuthorHandler connStr logger)     :<|>
+  (grantAdminHandler connStr logger)      :<|>
   
-  (createNewsHandler connStr)      :<|>
-  (getNewsHandler connStr)         :<|>  
+  (createNewsHandler connStr logger)      :<|>
+  (getNewsHandler connStr logger)         :<|>  
   
-  (postPhotosHandler connStr)      :<|> 
-  (getImagesHandler connStr)       :<|> 
-  (getImagesByNewsHandler connStr) :<|>
+  (postPhotosHandler connStr logger)      :<|> 
+  (getImagesHandler connStr logger)       :<|> 
+  (getImagesByNewsHandler connStr logger) :<|>
   
-  (getCategoryHandler connStr)     :<|>
-  (createCategoryHandler connStr)  :<|>
+  (getCategoryHandler connStr logger)     :<|>
+  (createCategoryHandler connStr logger)  :<|>
   
-  (getAudioStreamHandler connStr)  :<|>
-  (playAudioHandler connStr)       :<|>
-  (uploadAudioHandler connStr)     :<|>
-  (uploadAudioStreamHandler connStr)
+  (getAudioStreamHandler connStr logger)  :<|>
+  (playAudioHandler connStr logger)       :<|>
+  (uploadAudioHandler connStr logger)     :<|>
+  (uploadAudioStreamHandler connStr logger)
 
 
 
@@ -149,5 +149,5 @@ userAPI = Proxy
 
 
 
-app :: ConnectionString -> Application
-app connStr = serve userAPI ( server connStr )
+app :: ConnectionString -> HandlerLog -> Application
+app connStr logger = serve userAPI ( server connStr logger)

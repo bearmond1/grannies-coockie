@@ -10,9 +10,6 @@ import Database.Persist.Postgresql
 import Servant
 import Servant.Multipart
 
--- import Database.Esqueleto.Experimental ( (^.), (?.), (:&) )
--- import qualified Database.Esqueleto.Experimental as E
-
 import Data.Text  as Text hiding    ( map, length )
 import qualified Data.List as List
 import qualified Data.Map.Strict as Map
@@ -25,6 +22,8 @@ import Handlers.Primitives
 
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Lazy as LBS
+import System.Log.FastLogger
+
 
 
 
@@ -45,6 +44,7 @@ data NewsProxyType
 
 -- given list of news and their images we build   Map NewsID [Image]   for efficient processing 
 -- and assemble list of API-suitable obejcts
+-- TODO replace with DB view
 getNewsProxy :: [News] -> [Image] -> [NewsProxyType]
 getNewsProxy news images = Prelude.map getProxyFromNews news
   where tuplesList = Prelude.map (\image -> (imageNews_id image,image) ) images
@@ -63,26 +63,28 @@ getNewsProxy news images = Prelude.map getProxyFromNews news
   
 
   
-createNewsHandler :: ConnectionString -> Maybe Text -> News -> Handler Bool
-createNewsHandler connStr credentials news = do
-  checkCredentials connStr authorAuthority credentials
+createNewsHandler :: ConnectionString -> HandlerLog -> Maybe Text -> News -> Handler Bool
+createNewsHandler connStr logger credentials news = do
+  author <- checkCredentials connStr authorAuthority credentials
   id <- liftIO randomIO 
-  let news' = news{ newsNewsId = id } 
+  let news' = news{ newsNewsId = id, newsAuthor = author } 
   runDB connStr $ insert news'
+  logger $ "Posted news: " <> (toLogStr $ show news')
   return True
 
 
 
 -- type NewsQueryParams = Maybe Int -> Maybe Int -> Maybe Day -> Maybe Day -> Maybe Day -> [Text] -> [Text]
 -- is it possible to do smth with this huge signature?
-getNewsHandler :: ConnectionString -> 
+getNewsHandler :: ConnectionString -> HandlerLog ->
   Maybe Int -> Maybe Text -> Maybe Day -> Maybe Day -> Maybe Day -> [Text] -> [Text] -> Maybe Text
   -> Handler [NewsProxyType] 
-getNewsHandler connStr limit offset createdAt createdBefore createdAfter authors categories sorting = do
+getNewsHandler connStr logger limit offset createdAt createdBefore createdAfter authors categories sorting = do
   offsetFilters <- getOffsetFilters
   let params = getFetchNewsParams limit offsetFilters createdAt createdBefore createdAfter authors categories sorting 
   dbNews <- runDB connStr $ getNewsDB params
   images <- runDB connStr $ getImagesByNewsDB dbNews
+  logger $ toLogStr $ "Fetched news " <> (Text.concat $ map (\(News{ newsNewsId }) -> Text.pack . show $ newsNewsId) dbNews)
   return $ getNewsProxy dbNews images
 
   where -- we have validate Offest Keys
@@ -199,9 +201,9 @@ getNewsDB SelectParams{..} = fmap fromEntities $ selectList filters options
 
 
 
-postPhotosHandler :: ConnectionString -> Maybe Text -> MultipartData Mem -> Handler Bool
-postPhotosHandler connStr credentials multipartData = do
-  checkCredentials connStr authorAuthority credentials
+postPhotosHandler :: ConnectionString -> HandlerLog -> Maybe Text -> MultipartData Mem -> Handler Bool
+postPhotosHandler connStr logger credentials multipartData = do
+  author <- checkCredentials connStr authorAuthority credentials
   newsID <- validateNewsId multipartData
   let contents = Prelude.map (LBS.toStrict . fdPayload) $ files multipartData
 
@@ -210,18 +212,20 @@ postPhotosHandler connStr credentials multipartData = do
     let image = Image { imageNews_id = newsID, imageImage_id = id, imageContent = content }
     runDB connStr $ insert image
 
+  logger . toLogStr $ "Inserted " <> Text.pack ( show $ Prelude.length contents ) <> " by " <> Text.pack ( show author ) <> "."
   return True
   
-  where validateNewsId :: MultipartData Mem -> Handler Int
-        validateNewsId multipartData = do
-        
-          key_present <- case lookupInput "news_id" multipartData of
-                            Right newsID -> return newsID :: Handler Text
-                            _ -> throwError err400 { errBody = Aeson.encode ("Expected NewsID in reqest body." :: Text) }
+  where 
+    validateNewsId :: MultipartData Mem -> Handler Int
+    validateNewsId multipartData = do
+
+      key_present <- case lookupInput "news_id" multipartData of
+                       Right newsID -> return newsID :: Handler Text
+                       _ -> throwError err400 { errBody = Aeson.encode ("Expected NewsID in reqest body." :: Text) }
           
-          case readMaybe $ unpack key_present :: Maybe Int of
-            Just int -> return int
-            _ -> throwError err400 { errBody = Aeson.encode ("Could not parse \"" <> key_present <> "\" as int.") }
+      case readMaybe $ unpack key_present :: Maybe Int of
+        Just int -> return int
+        _ -> throwError err400 { errBody = Aeson.encode ("Could not parse \"" <> key_present <> "\" as int.") }
 
 
 
@@ -235,14 +239,17 @@ getImagesByNewsDB news =
   
   
   
-getImagesHandler :: ConnectionString -> Int -> Handler BS.ByteString
-getImagesHandler connStr imageID = do
+getImagesHandler :: ConnectionString -> HandlerLog -> Int -> Handler BS.ByteString
+getImagesHandler connStr logger imageID = do
   image <- runDB connStr $  selectList [ImageImage_id ==. imageID] [] 
+  logger . toLogStr $ "Getting image " <> show image
   case fromEntities image of
     [Image { imageContent , ..} ] -> return imageContent
     _ -> throwError err404 { errBody = Aeson.encode ("Not Found" :: Text)}
 
 
 	
-getImagesByNewsHandler :: ConnectionString -> Int -> Handler [Image]
-getImagesByNewsHandler connStr newsID = runDB connStr $ fmap fromEntities $ selectList [ImageNews_id ==. newsID] []
+getImagesByNewsHandler :: ConnectionString -> HandlerLog -> Int -> Handler [Image]
+getImagesByNewsHandler connStr logger newsID = do
+  logger . toLogStr $ "Getting images for news " <> show newsID
+  runDB connStr $ fmap fromEntities $ selectList [ImageNews_id ==. newsID] []

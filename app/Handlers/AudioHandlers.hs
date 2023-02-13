@@ -18,6 +18,8 @@ import           Servant.Multipart
 import           Handlers.Primitives
 import           Handlers.Authorization
 import           DBTypes
+import           System.Log.FastLogger
+
 
 
 type AudioID = Int
@@ -25,9 +27,10 @@ type AudioPieceIndex = Int
 
 
 -- getAudioStreamHandler :: ConnectionString -> AudioID -> Handler ( SourceIO ByteString )
-getAudioStreamHandler connStr audioID = 
+getAudioStreamHandler connStr logger audioID = do
   let header = "attachment; filename=\"" <> fromString (show audioID) <> ".ogg\"" :: Text
-  in (liftIO $ getNextStep connStr audioID 0) >>= return . addHeader header . fromStepT 
+  logger . toLogStr $ "Getting audio stream " <> show audioID
+  (liftIO $ getNextStep connStr audioID 0) >>= return . addHeader header . fromStepT
   where         
     getNextStep :: ConnectionString -> AudioID -> AudioPieceIndex -> IO (StepT IO ByteString)
     getNextStep connStr audioID index = do 
@@ -50,28 +53,29 @@ getAuidioPieceDB audioID index = do
   
   
   
-uploadAudioHandler :: ConnectionString -> Maybe Text -> AudioID ->  MultipartData Mem -> Handler Bool
-uploadAudioHandler connStr credentials audioID multipartData = 
+uploadAudioHandler :: ConnectionString -> HandlerLog -> Maybe Text -> AudioID ->  MultipartData Mem -> Handler Bool
+uploadAudioHandler connStr logger credentials audioID multipartData = 
   let [contents] = Prelude.map (LBS.toStrict . fdPayload) $ files multipartData
-  in writeAudiotoDB connStr credentials audioID contents
+  in writeAudiotoDB connStr logger credentials audioID contents
  
  
     
-uploadAudioStreamHandler :: ConnectionString -> Maybe Text -> AudioID -> SourceIO ByteString -> Handler Bool
-uploadAudioStreamHandler connStr credentials audioID source = do
+uploadAudioStreamHandler :: ConnectionString -> HandlerLog -> Maybe Text -> AudioID -> SourceIO ByteString -> Handler Bool
+uploadAudioStreamHandler connStr logger credentials audioID source = do
   audio <- liftIO $ runExceptT $ runSourceT source
   case audio of 
-    Right list -> writeAudiotoDB connStr credentials audioID $ BS.concat list
+    Right list -> writeAudiotoDB connStr logger credentials audioID $ BS.concat list
     _ -> throwError err400
   
   
-writeAudiotoDB :: ConnectionString -> Maybe Text -> AudioID -> ByteString -> Handler Bool
-writeAudiotoDB connStr credentials audioID content = do
-  checkCredentials connStr authorAuthority credentials
+writeAudiotoDB :: ConnectionString -> HandlerLog -> Maybe Text -> AudioID -> ByteString -> Handler Bool
+writeAudiotoDB connStr logger credentials audioID content = do
+  author <- checkCredentials connStr authorAuthority credentials
   let (byteStrList,_,_) = to1MbChunks ([], content, 0)
       bytestrToObject = \(index,bytestr) -> Audio{ audioAudio_id = audioID, audioIndex = index, audioContent = bytestr }
       audioArray = Prelude.map bytestrToObject byteStrList
   mapM_ (\audio -> runDB connStr $ insert audio) audioArray
+  logger . toLogStr $ "Inserted audio " <> show audioID <> " by " <> Text.unpack author <> "."
   return True
   
   
@@ -89,8 +93,9 @@ megabyte = 2^20 :: Int
 
 
 -- playAudioHandler :: ConnectionString -> Int -> Handler ByteString
-playAudioHandler connStr mbRange audioID = do
-  liftIO $ print "handler"
+playAudioHandler connStr logger mbRange audioID = do
+
+  -- parsing ranges
   header <- case mbRange of
               Just range -> return range
               _ -> return "bytes=0-"
@@ -109,6 +114,8 @@ playAudioHandler connStr mbRange audioID = do
                   (Just from, Nothing) -> return (from,2^20)
                   (a,b) -> (liftIO $ print (from',to')) >> throwError err400 { errBody = Aeson.encode (a,b) }
   liftIO $ print (from,to)
+  
+  -- make query options
   let fromIndex = div from megabyte
       skip = mod from megabyte
       left = mod to megabyte
@@ -116,12 +123,16 @@ playAudioHandler connStr mbRange audioID = do
                   then div to megabyte
                   else (div to megabyte) + 1
   byteStrings <- runDB connStr $ selectList [AudioAudio_id ==. audioID, AudioIndex >=. fromIndex, AudioIndex <=. toIndex] []
+  
+  -- process result into one ByteString
   let byteStr = BS.concat $ Prelude.map (\Audio{ audioContent } -> audioContent) $ fromEntities byteStrings
       result = BS.take ((BS.length byteStr) - skip - left) $ BS.drop skip byteStr
-
+	  
+  -- add headers
       accept_ranges req = addHeader "bytes" req
       content_length req = addHeader (BS.length result) req
       content_range req = addHeader ( "bytes " <> Text.pack (show from) <> "-" <> Text.pack (show to) <> "/*" :: Text) req
       content_type req = addHeader "application/ogg" req
-      
+
+  logger . toLogStr $ "Playing audio " <> show audioID <> "."
   return . accept_ranges . content_length . content_range . content_type $ result  

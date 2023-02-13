@@ -37,20 +37,20 @@ library
       DeriveAnyClass
       DeriveGeneric
       DuplicateRecordFields
-      LambdaCase
+      FlexibleInstances
       FlexibleContexts
+      LambdaCase
       OverloadedStrings
       OverloadedRecordDot
       OverloadedLists
-      StrictData
-      ScopedTypeVariables
+      MultiParamTypeClasses
       NamedFieldPuns
       RecordWildCards
+      StrictData
+      ScopedTypeVariables
       TypeApplications
       TypeFamilies
       TypeOperators
-      FlexibleInstances
-      MultiParamTypeClasses
       PartialTypeSignatures
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
   build-depends:
@@ -61,6 +61,7 @@ library
     , bytestring
     , containers
     , cryptonite
+    , fast-logger
     , http-client
     , http-types
     , mmorph
@@ -79,6 +80,7 @@ library
     , text
     , time
     , wai
+    , wai-logger
     , warp
   mixins:
       base hiding (Prelude)
@@ -110,20 +112,20 @@ executable grannies-coockie-exe
       DeriveAnyClass
       DeriveGeneric
       DuplicateRecordFields
-      LambdaCase
+      FlexibleInstances
       FlexibleContexts
+      LambdaCase
       OverloadedStrings
       OverloadedRecordDot
       OverloadedLists
-      StrictData
-      ScopedTypeVariables
+      MultiParamTypeClasses
       NamedFieldPuns
       RecordWildCards
+      StrictData
+      ScopedTypeVariables
       TypeApplications
       TypeFamilies
       TypeOperators
-      FlexibleInstances
-      MultiParamTypeClasses
       PartialTypeSignatures
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
@@ -134,6 +136,7 @@ executable grannies-coockie-exe
     , bytestring
     , containers
     , cryptonite
+    , fast-logger
     , grannies-coockie
     , http-client
     , http-types
@@ -152,6 +155,7 @@ executable grannies-coockie-exe
     , text
     , time
     , wai
+    , wai-logger
     , warp
   default-language: Haskell2010
 
@@ -170,20 +174,20 @@ test-suite grannies-coockie-test
       DeriveAnyClass
       DeriveGeneric
       DuplicateRecordFields
-      LambdaCase
+      FlexibleInstances
       FlexibleContexts
+      LambdaCase
       OverloadedStrings
       OverloadedRecordDot
       OverloadedLists
-      StrictData
-      ScopedTypeVariables
+      MultiParamTypeClasses
       NamedFieldPuns
       RecordWildCards
+      StrictData
+      ScopedTypeVariables
       TypeApplications
       TypeFamilies
       TypeOperators
-      FlexibleInstances
-      MultiParamTypeClasses
       PartialTypeSignatures
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
@@ -194,6 +198,7 @@ test-suite grannies-coockie-test
     , bytestring
     , containers
     , cryptonite
+    , fast-logger
     , grannies-coockie
     , http-client
     , http-types
@@ -212,5 +217,6 @@ test-suite grannies-coockie-test
     , text
     , time
     , wai
+    , wai-logger
     , warp
   default-language: Haskell2010

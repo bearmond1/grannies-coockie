@@ -22,13 +22,13 @@ description:         Please see the README on GitHub at <https://github.com/gith
 dependencies:
 - base >= 4.7 && < 5
 - aeson
-#- aeson-pretty
 - array
 - bytestring
 - base64-bytestring
 - cryptonite
 - containers
 #- esqueleto
+- fast-logger
 - monad-logger
 - persistent
 - persistent-postgresql
@@ -38,22 +38,16 @@ dependencies:
 - http-client
 - mtl
 - mmorph
-#- either
 - servant 
 - servant-docs
-#- servant-openapi3
 - servant-server
-#- servant-util
 - servant-multipart
 - random
 - record-hasfield
-#- lens
-#- optics
 - split
-#- servant-swagger
-#- swagger2
 - warp
 - wai
+- wai-logger
 
 
 ghc-options:
@@ -74,20 +68,20 @@ default-extensions:
 - DeriveAnyClass
 - DeriveGeneric
 - DuplicateRecordFields
-- LambdaCase
+- FlexibleInstances
 - FlexibleContexts
+- LambdaCase
 - OverloadedStrings
 - OverloadedRecordDot
 - OverloadedLists
-- StrictData
-- ScopedTypeVariables
+- MultiParamTypeClasses
 - NamedFieldPuns
 - RecordWildCards
+- StrictData
+- ScopedTypeVariables
 - TypeApplications
 - TypeFamilies
 - TypeOperators
-- FlexibleInstances
-- MultiParamTypeClasses
 - PartialTypeSignatures
 
 
