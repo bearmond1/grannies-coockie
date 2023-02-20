@@ -42,24 +42,28 @@ data NewsProxyType
   }
   deriving  (Eq, Show, Generic, ToJSON, FromJSON)
 
--- given list of news and their images we build   Map NewsID [Image]   for efficient processing 
--- and assemble list of API-suitable obejcts
--- TODO replace with DB view
+
+-- TODO 
+-- 1. replace with DB view
+-- 2. put server URL into enviroment
 getNewsProxy :: [News] -> [Image] -> [NewsProxyType]
 getNewsProxy news images = Prelude.map getProxyFromNews news
-  where tuplesList = Prelude.map (\image -> (imageNews_id image,image) ) images
-        imagesTable = List.foldr ( \(imageID,image) hm -> Map.insertWith (<>) imageID [image] hm ) ( Map.empty :: Map.Map Int [Image] ) tuplesList
-        getImages newsID = Map.findWithDefault [] newsID imagesTable
-        getImagesURLs newsID = Prelude.map (\image -> "localhost:3000/images/" <> (pack . show $ imageImage_id image)) (getImages newsID)
-        getProxyFromNews News{..} = 
-          NewsProxyType { newsId = newsNewsId
-                        , creation_date = newsCreation_date
-                        , header = newsHeader
-                        , content = newsContent
-                        , is_published = newsIs_published
-                        , author = newsAuthor
-                        , category = newsCategory
-                        , imagesURLs = getImagesURLs newsNewsId }
+-- given list of news and their images we build   Map NewsID [Image]   for efficient processing 
+-- and assemble list of API-suitable obejcts
+  where 
+    tuplesList = Prelude.map (\image -> (imageNews_id image,image) ) images
+    imagesTable = List.foldr ( \(imageID,image) hm -> Map.insertWith (<>) imageID [image] hm ) ( Map.empty :: Map.Map Int [Image] ) tuplesList
+    getImages newsID = Map.findWithDefault [] newsID imagesTable
+    getImagesURLs newsID = Prelude.map (\image -> "localhost:3000/images/" <> (pack . show $ imageImage_id image)) (getImages newsID)
+    getProxyFromNews News{..} = 
+      NewsProxyType { newsId = newsNewsId
+                    , creation_date = newsCreation_date
+                    , header = newsHeader
+                    , content = newsContent
+                    , is_published = newsIs_published
+                    , author = newsAuthor
+                    , category = newsCategory
+                    , imagesURLs = getImagesURLs newsNewsId }
   
 
   
@@ -98,10 +102,11 @@ getNewsHandler connStr logger limit offset createdAt createdBefore createdAfter 
              _ -> throwError err400 { errBody = Aeson.encode ("Offset for sorted query has to contain both sorting key and primary key." :: Text ) }
             
          -- offset without sorting means offset key has to be a valid primary key
-         (Nothing,(Just offs)) -> do
-           liftIO $ print offs
-           primKey <- parseNewsId offs
-           return [NewsNewsId >. primKey]
+         (Nothing,(Just offs)) -> --do
+           --liftIO $ print offs
+		   parseNewsId offs >>= \x -> return [NewsNewsId >. x]
+           -- primKey <- parseNewsId offs
+           -- return [NewsNewsId >. primKey]
             
          -- without offset we`re done here
          (_,Nothing) -> return []
@@ -170,34 +175,6 @@ getFetchNewsParams limit offsetFilters mbcreatedAt mbcreatedBefore mbcreatedAfte
 
 getNewsDB :: (MonadIO m) => SelectParams News -> SqlPersistT m [News]
 getNewsDB SelectParams{..} = fmap fromEntities $ selectList filters options
-
-
--- getNewsDB :: (MonadIO m, MonadLogger m) => SqlReadT m [News]
--- getNewsDB = do
-
-  -- Esqueleto examples
-  -- newsList <- E.select $ do
-        -- news <-
-          -- E.from $
-            -- E.table @News
-        -- return news
-        
-  -- date <- liftIO $ liftM (toGregorian . utctDay) getCurrentTime
-        
-  -- let whereClause = \news -> True --news ^. NewsCreation_date E.==. (  E.Value date)
-        
-  -- newsAndCount <- E.select $ do
-                  -- (news E.:& image) <-
-                    -- E.from $ E.table @News
-                    -- `E.innerJoin` E.table @Image
-                    -- `E.on` (\(news E.:& image) ->
-                             -- news ^. NewsNewsId  E.==. image ^. ImageNews_id)
-                    -- E.where_ ( whereClause @News )
-                  -- return (news, image) 
-
-  
-  -- liftIO $ print newsAndCount 
-  -- return $ fromEntities newsList
 
 
 

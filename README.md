@@ -1,7 +1,8 @@
 # grannies-coockie
 
-Backend for simple news site, powered by warp, persistent, servant.
-Features data streaming, audio playing, hashing with salt, basic authentication, pagination by key.
+Backend for the simple news website, powered by warp, persistent, servant, fast-logger.
+Features data streaming, audio playing, hashing with salt, basic authentication, pagination by key, logging. 
+API documentation in api_docs.md
 
 TODO:
 1) GET News returns pictures's URL - Done
@@ -11,7 +12,7 @@ TODO:
 5) Pictures get headers - fixed
 6) Audio playing - Done
 7) Make documentation - Done
-8) Write tests
-9) Maybe add logging
+8) Add logging - Done
+9) Write tests
 10) Remove prefixes in persistent
 11) Check error codes

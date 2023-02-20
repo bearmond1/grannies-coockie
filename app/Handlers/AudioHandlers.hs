@@ -99,29 +99,29 @@ playAudioHandler connStr logger mbRange audioID = do
   header <- case mbRange of
               Just range -> return range
               _ -> return "bytes=0-"
-  liftIO $ print header
+
   let dropSize = Text.takeWhile (/= '/') header
   range <- case splitOn "=" dropSize of
              (_:range:[]) -> return range
              x -> throwError err400 { errBody = Aeson.encode x }
-  liftIO $ print range
+
   (from',to') <- case splitOn "-" range of
                  (from:to:[]) -> return ( Text.unpack from, Text.unpack to)
                  _ -> throwError err400
-  liftIO $ print (from',to')
+
   (from,to) <- case (readMaybe from' :: Maybe Int, readMaybe to' :: Maybe Int) of
                   (Just from,Just to) -> return (from,to)
                   (Just from, Nothing) -> return (from,2^20)
                   (a,b) -> (liftIO $ print (from',to')) >> throwError err400 { errBody = Aeson.encode (a,b) }
-  liftIO $ print (from,to)
   
-  -- make query options
+  -- making query options
   let fromIndex = div from megabyte
       skip = mod from megabyte
       left = mod to megabyte
       toIndex = if left == 0
                   then div to megabyte
                   else (div to megabyte) + 1
+  -- query
   byteStrings <- runDB connStr $ selectList [AudioAudio_id ==. audioID, AudioIndex >=. fromIndex, AudioIndex <=. toIndex] []
   
   -- process result into one ByteString

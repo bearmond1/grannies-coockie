@@ -4,7 +4,7 @@ import           Control.Monad.IO.Class       (liftIO,MonadIO)
 import           Text.Read                    (readMaybe)
 import           Data.Text as Text
 import           Data.ByteString
-import           Network.Wai                  (Request)
+import           Database.Persist.Postgresql 
 import           Network.Wai.Handler.Warp     (run,runSettings,setLogger,setPort,defaultSettings)
 import           API                          (app)
 import           System.Environment        
@@ -23,7 +23,11 @@ main = do
   port <- getPort  
   logger <- getLogger
 
-  run port $ app connStr logger
+  runApp port connStr logger
+
+
+runApp :: Int -> ConnectionString -> (LogStr -> Handler ()) -> IO ()
+runApp port connStr logger = run port $ app connStr logger
 
 
 
